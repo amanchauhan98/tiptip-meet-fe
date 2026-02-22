@@ -82,7 +82,7 @@ export default function HomePage() {
                     />
                     <button
                         id="join-btn"
-                        className="btn btn-secondary btn-join"
+                        className="btn btn-secondary"
                         type="submit"
                         disabled={loading || !joinCode.trim()}
                     >
