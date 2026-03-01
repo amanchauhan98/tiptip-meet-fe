@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import useMediaStream from '../hooks/useMediaStream.js';
+import useVirtualBackground from '../hooks/useVirtualBackground.js';
 import useWebRTC from '../hooks/useWebRTC.js';
 import VideoTile from '../components/VideoTile.jsx';
 import Controls from '../components/Controls.jsx';
@@ -32,11 +33,27 @@ export default function RoomPage() {
         stopMedia,
     } = useMediaStream();
 
+    // Setup virtual background processing
+    const { processedStream, bgConfig, setBgConfig } = useVirtualBackground(
+        localStream,
+        isVideoEnabled && !isScreenSharing
+    );
+
     const { remoteStreams, peerNames, screenSharer, replaceVideoTrack } = useWebRTC(
-        nameSubmitted ? localStream : null,
+        nameSubmitted ? processedStream : null,
         nameSubmitted ? slug : null,
         userName
     );
+
+    // Automatically replace the video track to remote peers when virtual background stream changes
+    useEffect(() => {
+        if (processedStream && nameSubmitted && !isScreenSharing) {
+            const videoTrack = processedStream.getVideoTracks()[0];
+            if (videoTrack) {
+                replaceVideoTrack(videoTrack);
+            }
+        }
+    }, [processedStream, replaceVideoTrack, nameSubmitted, isScreenSharing]);
 
     // Validate room exists
     useEffect(() => {
@@ -167,7 +184,7 @@ export default function RoomPage() {
 
     // Build tile list for pinned vs unpinned
     const allTiles = [
-        { id: 'local', stream: localStream, name: userName, isLocal: true, isMuted: !isAudioEnabled, isVideoOff: !isVideoEnabled, isScreenShare: isScreenSharing },
+        { id: 'local', stream: processedStream || localStream, name: userName, isLocal: true, isMuted: !isAudioEnabled, isVideoOff: !isVideoEnabled, isScreenShare: isScreenSharing },
         ...remoteEntries.map(([socketId, stream]) => ({
             id: socketId,
             stream,
@@ -269,6 +286,8 @@ export default function RoomPage() {
                 isAudioEnabled={isAudioEnabled}
                 isVideoEnabled={isVideoEnabled}
                 isScreenSharing={isScreenSharing}
+                bgConfig={bgConfig}
+                setBgConfig={setBgConfig}
                 onToggleAudio={toggleAudio}
                 onToggleVideo={toggleVideo}
                 onToggleScreenShare={handleToggleScreenShare}

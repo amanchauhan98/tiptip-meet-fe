@@ -9,6 +9,8 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@mediapipe/camera_utils": "^0.3.1675466862",
+        "@mediapipe/selfie_segmentation": "^0.1.1675465747",
         "@tailwindcss/vite": "^4.1.18",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
